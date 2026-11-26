@@ -13,10 +13,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4
-
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -24,51 +22,72 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
 
-
       - name: Check Flutter
         run: flutter --version
-
 
       - name: Update Gradle
         run: |
           sed -i 's/gradle-[0-9.]*-bin.zip/gradle-9.5.0-bin.zip/' \
           android/gradle/wrapper/gradle-wrapper.properties
 
+      - name: Check Android files
+        run: |
+          echo "=== Isi folder android ==="
+          ls -la android
+
+          echo ""
+          echo "=== Cari file settings ==="
+          find android -maxdepth 2 -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" \)
 
       - name: Update Android Gradle Plugin
         run: |
-          sed -i 's/com.android.application" version "[0-9.]*"/com.android.application" version "9.1.1"/g' \
-          android/settings.gradle
+          if [ -f "android/settings.gradle.kts" ]; then
+            echo "Menggunakan settings.gradle.kts"
 
+            sed -i 's/id("com.android.application") version "[0-9.]*"/id("com.android.application") version "9.1.1"/g' \
+            android/settings.gradle.kts
+
+          elif [ -f "android/settings.gradle" ]; then
+            echo "Menggunakan settings.gradle"
+
+            sed -i 's/id "com.android.application" version "[0-9.]*"/id "com.android.application" version "9.1.1"/g' \
+            android/settings.gradle
+
+          else
+            echo "ERROR: File settings.gradle atau settings.gradle.kts tidak ditemukan."
+            exit 1
+          fi
 
       - name: Check Android Gradle versions
         run: |
-          echo "================================="
-          echo "ANDROID SETTINGS.GRADLE"
-          echo "================================="
-          cat android/settings.gradle
+          echo "=============================="
+          echo "SETTINGS FILE"
+          echo "=============================="
+
+          if [ -f "android/settings.gradle.kts" ]; then
+            cat android/settings.gradle.kts
+          else
+            cat android/settings.gradle
+          fi
 
           echo ""
-          echo "================================="
+          echo "=============================="
           echo "GRADLE WRAPPER"
-          echo "================================="
-          cat android/gradle/wrapper/gradle-wrapper.properties
+          echo "=============================="
 
+          cat android/gradle/wrapper/gradle-wrapper.properties
 
       - name: Flutter Clean
         run: flutter clean
 
-
       - name: Flutter Pub Get
         run: flutter pub get
-
 
       - name: Build APK
         run: flutter build apk --release
