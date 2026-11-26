@@ -1,39 +1,63 @@
 name: Build Flutter APK
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - master
+      - main
+
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
+
+      # 1. Ambil source code dari repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
+
+      # 2. Install Java 17
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
+
+      # 3. Install Flutter
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
 
-      - name: Install dependencies
+
+      # 4. Cek versi Flutter
+      - name: Check Flutter
+        run: flutter --version
+
+
+      # 5. Bersihkan project
+      - name: Flutter Clean
+        run: flutter clean
+
+
+      # 6. Ambil dependencies
+      - name: Flutter Pub Get
         run: flutter pub get
 
+
+      # 7. Build APK
       - name: Build APK
         run: flutter build apk --release
 
+
+      # 8. Simpan APK sebagai artifact
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: aplikasi-apk
+          name: mtk3-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
