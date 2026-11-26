@@ -3,8 +3,8 @@ name: Build Flutter APK
 on:
   push:
     branches:
-      - master
       - main
+      - master
 
   workflow_dispatch:
 
@@ -14,12 +14,10 @@ jobs:
 
     steps:
 
-      # 1. Ambil source code dari repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
 
-      # 2. Install Java 17
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -27,7 +25,6 @@ jobs:
           java-version: '17'
 
 
-      # 3. Install Flutter
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -35,27 +32,47 @@ jobs:
           cache: true
 
 
-      # 4. Cek versi Flutter
       - name: Check Flutter
         run: flutter --version
 
 
-      # 5. Bersihkan project
+      - name: Update Gradle
+        run: |
+          sed -i 's/gradle-[0-9.]*-bin.zip/gradle-9.5.0-bin.zip/' \
+          android/gradle/wrapper/gradle-wrapper.properties
+
+
+      - name: Update Android Gradle Plugin
+        run: |
+          sed -i 's/com.android.application" version "[0-9.]*"/com.android.application" version "9.1.1"/g' \
+          android/settings.gradle
+
+
+      - name: Check Android Gradle versions
+        run: |
+          echo "================================="
+          echo "ANDROID SETTINGS.GRADLE"
+          echo "================================="
+          cat android/settings.gradle
+
+          echo ""
+          echo "================================="
+          echo "GRADLE WRAPPER"
+          echo "================================="
+          cat android/gradle/wrapper/gradle-wrapper.properties
+
+
       - name: Flutter Clean
         run: flutter clean
 
 
-      # 6. Ambil dependencies
       - name: Flutter Pub Get
         run: flutter pub get
 
 
-      # 7. Build APK
       - name: Build APK
         run: flutter build apk --release
 
-
-      # 8. Simpan APK sebagai artifact
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
